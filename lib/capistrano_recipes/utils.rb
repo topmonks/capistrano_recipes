@@ -19,10 +19,11 @@ def host_task(name, options={}, &block)
   end
 end
 
-def with_user(new_user, &block)
-  old_user = user
+def with_user(new_user, new_pass, &block)
+  old_user, old_pass = user, password
   if old_user != new_user
     set :user, new_user
+    set :password, new_pass
     teardown_connections_to(sessions.keys)
   end
 
@@ -30,7 +31,14 @@ def with_user(new_user, &block)
 
   if old_user != new_user
     set :user, old_user
+    set :password, old_pass
     teardown_connections_to(sessions.keys)
+  end
+end
+
+def sudo_commands(&block)
+  with_user(root_user, root_password) do
+    yield
   end
 end
 
@@ -67,12 +75,27 @@ def generate_config(template, remote_file)
   upload StringIO.new(parse_template(template)), remote_file
 end
 
+def cp_template(from, to)
+  erb = File.read(File.expand_path("../templates/#{from}", __FILE__))
+  put ERB.new(erb).result(binding), "/tmp/template"
+  run "mkdir -p #{File.dirname(to)}"
 
-def ask_with_default(var, default)
+  sudo_commands do
+    run "#{sudo} mv /tmp/template #{to}"
+  end
+end
+
+def prompt_set(var, default = nil)
   set(var) do
-    Capistrano::CLI.ui.ask "#{var} [#{default}] : "
+    Capistrano::CLI.ui.ask "#{var} [default: #{default}]: "
   end
   set var, default if eval("#{var.to_s}.empty?")
+end
+
+def password_prompt_set(var)
+  set(var) do
+    Capistrano::CLI.password_prompt "#{var}: "
+  end
 end
 
 def password_prompt_with_default(var, default)

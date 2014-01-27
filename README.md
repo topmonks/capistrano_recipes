@@ -73,11 +73,25 @@ Then run `cap host:setup deploy:initial` to make your first deploy. Use `cap dep
     set :application_domain, "app_domain.com"     # Domain for production server
     set :domain, "192.168.1.1"                    # Server address where to deploy production
 
+    set :rails_env, 'production'
+    set :branch, 'production'
+    set :thin_port, 4300
+    set :app_server, "thin"
+    set :nginx_use_ssl, true
+    set :thin_servers, 3
+
 `config/deploy/staging.rb`
 
     set :application, "app_name_test"             # Application name for staging server
     set :application_domain, "qa.app_domain.com"  # Domain for staging server
     set :domain, "192.168.1.1"                    # Server address where to deploy staging
+
+    set :rails_env, 'staging'
+    set :branch, 'staging'
+    set :thin_port, 4400
+    set :app_server, "thin"
+    set :nginx_use_ssl, false
+    set :thin_servers, 3
 
 Then execute `cap host:setup deploy:initial nginx:enable` to create user and config files and perform initial deploy,
 then symlink `/etc/nginx/sites-available/app_name.conf` to `/etc/nginx/sites-enabled/app_name.conf`.
@@ -102,7 +116,7 @@ On next deploy just run `cap deploy:migrations` to deploy new application versio
 
 ## Config templates
 
-Capistrano-scrip uses ERB to parse nginx/monit/thin/etc templates. You can see default config templates at github:
+Capistrano_recipes uses ERB to parse nginx/monit/thin/etc templates. You can see default config templates at github:
 https://github.com/rubydev/capistrano_recipes/tree/master/templates
 
 If you don't like any of this, you can replace it with you own:
@@ -117,11 +131,3 @@ If you don't like any of this, you can replace it with you own:
 3. Commit your changes (`git commit -am "my cool feature"`)
 4. Push to the branch (`git push origin my_branch`)
 5. Create new Pull Request
-
-### Editing documentation
-
-1. Install dependencies: `bundle install`
-2. Run yard server: `bundle exec yard server -r`
-3. Edit documentation
-4. Preview your changes at http://localhost:8808/
-5. Commit: `git commit -am "Updated documentation for ..."

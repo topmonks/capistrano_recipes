@@ -8,49 +8,46 @@ upstream <%= application %>_app_server {
 <% end %>
 }
 
-# <%= application %> Server
-server {
-  listen      <%= nginx_port %>;
-  server_name .<%= application_domain %>;
 
-  keepalive_timeout 5;
+# <%= application %> Server
+<% if nginx_use_ssl %>
+server {
+  server_name .<%= application_domain %>;
+  listen 80;
+  rewrite ^(.*) https://<%= application_domain %>$1 permanent;
+}
+
+server {
+  server_name .<%= application_domain %>;
+  listen 443 ssl;
+
+  ssl_certificate /etc/nginx/ssl/<%= application_domain %>.crt;
+  ssl_certificate_key /etc/nginx/ssl/<%= application_domain %>.key;
+<% else %>
+server {
+  server_name .<%= application_domain %>;
+  listen 80;
+<% end %>
+
+  client_max_body_size 100M;
+  keepalive_timeout 60;
   root <%= deploy_to %>/current/public;
   gzip on;
   gzip_types text/plain text/xml application/xml application/xml+rss
-             text/css text/javascript application/javascript application/json;
-  log_format <%= application %>_combined '$remote_addr - $remote_user [$time_local] ($request_time sec) '
-                      '"$request" $status $body_bytes_sent '
-                      '"$http_referer" "$http_user_agent"';
-  access_log  <%= nginx_log_path %>/access.log <%= application %>_combined;
-  error_log   <%= nginx_log_path %>/error.log info;
+  text/css text/javascript application/javascript application/json;
 
-  error_page 551 =503 @maintenance;
-  location @maintenance {
-    rewrite ^(.*)$ /system/maintenance.html break;
-  }
-  set $maintenance 0;
-  if (-f $document_root/system/maintenance.html) {
-    set $maintenance 1;
-  }
-  if ($request_uri = /favicon.ico) {
-    # Browsers will try to get favicon if it's not returned with 200ok status
-    set $maintenance 0;
-  }
-  if ($maintenance) {
-    # There can be several reasons for 503 error. We custom return 551 error
-    # to ensure maintenance.html is only shown when it's really maintenance
-    return 551;
-  }
+  access_log <%= nginx_log_path %>/access.log;
+  error_log <%= nginx_log_path %>/error.log info;
 
   rewrite ^/(.*)/$ /$1 permanent; # Truncate trailing slashes
   try_files $uri @rails;
 
   expires -1;
-# TODO: enable cache for all non-static content
-# maybe expires max; in server context, and expires -1; in @rails location?
-#  location ~ \.[\w]+$ { # Files with extension, .css, .png, etc.
-#    expires max;
-#  }
+  # TODO: enable cache for all non-static content
+  # maybe expires max; in server context, and expires -1; in @rails location?
+  # location ~ \.[\w]+$ { # Files with extension, .css, .png, etc.
+  # expires max;
+  # }
 
   location = /favicon.ico {
     try_files $uri =204;
@@ -58,10 +55,17 @@ server {
     log_not_found off;
   }
 
-  location /attachment_files {
-      root <%= deploy_to %>/current/public/system;
-      internal;
+  location ~* ^/assets/ {
+    root <%= deploy_to %>/current/public;
   }
+  location ~* ^/uploads\/city\/city_map/ {
+    root <%= deploy_to %>/current/public;
+  }
+  location /ZeroClipboard.swf {
+    root <%= deploy_to %>/current/public;
+  }
+
+  location ~ /\.(svn|git) { deny all; }
 
   location @rails {
     proxy_pass http://<%= application %>_app_server;

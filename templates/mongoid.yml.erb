@@ -1,0 +1,11 @@
+<%= rails_env %>:
+  sessions:
+    default:
+      database: <%= application %>
+      hosts:
+        - localhost:27017
+      options:
+      username: <%= application %>
+      password: <%= mongodb_password %>
+  options:
+    identity_map_enabled: true

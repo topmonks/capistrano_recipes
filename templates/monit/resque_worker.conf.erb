@@ -1,0 +1,14 @@
+<% workers.each do |queues, number_of_workers| %>
+  <% number_of_workers.times.each do |index| %>
+check process resque-work-<%= application %>-<%= index+1 %>
+  with pidfile /var/www/<%= application %>/current/tmp/pids/resque_work_<%= index+1 %>.pid
+
+  alert marian.mrozek@topmonks.com only on { timeout, nonexist }
+  alert jan.uhlar@topmonks.com only on { timeout, nonexist }
+
+  start program = "/bin/su - deploy -c 'cd /var/www/<%= application %>/current && bundle exec rake environment resque:work RAILS_ENV=<%= rails_env %> QUEUE="<%= queues %>" BACKGROUND=yes VERBOSE=1 INTERVAL=5 PIDFILE=tmp/pids/resque_work_<%= index+1 %>.pid >> log/resque_work_<%= index+1 %>.log'"
+  stop program = "/bin/su - deploy -c 'cd /var/www/<%= application %>/current && kill -s QUIT `cat tmp/pids/resque_work_<%= index+1 %>.pid` && rm -f tmp/pids/resque_work_<%= index+1 %>.pid; exit 0;'"
+  if totalmem is greater than 350 MB for 10 cycles then restart # eating up memory?
+  group resque-work-<%= application %>
+  <% end %>
+<% end %>

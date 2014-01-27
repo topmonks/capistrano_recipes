@@ -2,58 +2,60 @@ require 'capistrano_recipes/utils'
 
 # monit is a free, open source process supervision tool for Unix and Linux.
 Capistrano::Configuration.instance.load do
-  # Path to monit configuration template
-  _cset(:monit_config_template) { "monit/monit_#{app_server}.conf.erb" }
-  # The remote location of monit's config file
-  _cset(:monit_config_path) { "/etc/monit/conf.d/#{application}-#{app_server}" }
+
   # Path to monit binary on server
   _cset(:monit_command) { "monit" }
+  password_prompt_set :monit_admin_pass
 
   namespace :monit do
-    desc "Reloads monit"
-    task :reload, :roles => :app do
-      run "#{sudo} #{monit_command} reload"
-    end
-
-    namespace :status do
-      desc "Status summary"
-      task :default do
-        run "#{sudo} #{monit_command} summary"
+    desc "Setup all Monit configuration"
+    task :setup do
+      sudo_commands do
+        run "#{sudo} mkdir -p /etc/monit/conf.d"
+        run "#{sudo} mkdir -p /var/lib/monit"
+        run "#{sudo} touch id"
       end
-
-      desc "Full status"
-      task :full do
-        sudo "#{monit_command} status"
+      monit_conf = "/etc/monit.conf"
+      cp_template("monit/monitrc.erb", monit_conf)
+      sudo_commands do
+        run "#{sudo} chown root:root #{monit_conf}"
+        run "#{sudo} chmod 600 #{monit_conf}"
       end
+      resque_worker
+      mongodb
+      redis
+      neo4j
+      nginx
+      thin
+      reload
     end
 
-    desc <<-EOF
-    Parses the configuration template file :{monit_config_template} through ERB to fetch our variables \
-    and uploads the result to :{monit_config_path}
-    EOF
-    task :setup, :roles => :app , :except => { :no_release => true } do
-      generate_config(monit_config_template, monit_config_path)
-    end
+    task(:mongodb, roles: :app) { monit_config "monit/mongodb.conf.erb", "mongodb", false }
+    task(:redis, roles: :app) { monit_config "monit/redis.conf.erb", "redis", false }
+    task(:nginx, roles: :app) { monit_config "monit/nginx.conf.erb", "nginx", false }
+    task(:thin, roles: :app) { monit_config "monit/nginx/thin.conf.erb", "thin" }
+    task(:neo4j, roles: :app) { monit_config "monit/neo4j.conf.erb", "neo4j" }
+    task(:resque_worker, roles: :app) { monit_config "monit/resque_worker.conf.erb", "resque_worker" }
 
-    desc "Parses config file and outputs it to STDOUT (internal task) "
-    task :parse_config, :roles => :app , :except => { :no_release => true } do
-      puts parse_template(monit_config_template)
-    end
-
-    desc <<-EOF
-    Creates empty monit configuration file for this application, grants user permissions to modify it
-    EOF
-    host_task :setup_host do
-      run "#{sudo} touch #{monit_config_path} && " \
-          "#{sudo} chown #{deploy_user}:#{group} #{monit_config_path}"
-
-      with_user deploy_user do
-        monit.setup
+    %w[start stop restart reload].each do |command|
+      desc "Run Monit #{command} script"
+      task command do
+        sudo_commands do
+          run "#{sudo} service monit #{command}"
+        end
       end
     end
   end
 
-  after 'host:setup' do
-    monit.setup_host #if Capistrano::CLI.ui.agree("Create monit-related files? [y/n]")
+  def monit_config(name, dest, uniq = true)
+    uniq_name = uniq ? "#{application}-#{dest}" : dest
+    destination = "/etc/monit/conf.d/#{uniq_name}.conf"
+    cp_template name, destination
+    sudo_commands do
+      run "#{sudo} chown root:root #{destination}"
+      run "#{sudo} chmod 600 #{destination}"
+    end
   end
+
+  after "deploy:setup", "monit:setup"
 end

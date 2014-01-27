@@ -1,0 +1,27 @@
+set daemon 30
+
+set logfile /var/log/monit.log
+set idfile /var/lib/monit/id
+set statefile /var/lib/monit/state
+
+set eventqueue
+basedir /var/lib/monit/events
+slots 100
+
+set mailserver smtp.gmail.com port 587
+  username "noreply@topmonks.com" password "bFq*d7Lg"
+  using tlsv1
+  with timeout 30 seconds
+
+#set alert marian.mrozek@topmonks.com
+#set alert jan.uhlar@topmonks.com
+
+set httpd port 2812
+  allow admin:"<%= monit_admin_pass %>"
+
+check system dev02.cairo.topmonks.com
+  if loadavg(5min) > 2 for 2 cycles then alert
+  if memory > 95% for 2 cycles then alert
+  if cpu(user) > 75% for 2 cycles then alert
+
+include /etc/monit/conf.d/*

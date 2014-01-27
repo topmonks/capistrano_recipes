@@ -1,0 +1,4 @@
+check process neo4j-<%= application %> with pidfile /var/www/neo4j_<%= rails_env %>/data/neo4j-service.pid
+start program = "/bin/su - <%= user %> -c '/var/www/neo4j_<%= rails_env %>/bin/neo4j start'"
+stop program = "/bin/su - <%= user %> -c '/var/www/neo4j_<%= rails_env %>/bin/neo4j stop'"
+if 5 restarts within 5 cycles then restart
