@@ -76,7 +76,7 @@ def generate_config(template, remote_file)
 end
 
 def cp_template(from, to)
-  erb = File.read(File.expand_path("../templates/#{from}", __FILE__))
+  erb = File.read(File.expand_path("../../../templates/#{from}", __FILE__))
   put ERB.new(erb).result(binding), "/tmp/template"
   run "mkdir -p #{File.dirname(to)}"
 

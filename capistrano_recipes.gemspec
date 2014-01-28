@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.require_paths = %w(lib)
   s.extra_rdoc_files = %w(LICENSE)
 
-  s.add_dependency "capistrano", "2.15.4"
+  s.add_dependency "capistrano", ['>= 2.8.0', '< 3.0']
   s.add_development_dependency 'rspec'
 
 end
