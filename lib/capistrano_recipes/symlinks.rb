@@ -11,7 +11,7 @@ Capistrano::Configuration.instance.load do
     desc "Create"
     task :setup, :roles => :app, :except => {:no_release => true} do
       run "mkdir -p #{shared_path}/uploads"
-      symlink_examples.each do |file|
+      symlink_yml_examples.each do |file|
         next if remote_file_exists?(target_dir + "/#{file}.yml")
         cp_file(File.expand_path("../../#{file}.example.yml", __FILE__), target_dir + "/#{file}.yml")
       end
