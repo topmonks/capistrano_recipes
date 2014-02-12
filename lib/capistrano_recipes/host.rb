@@ -6,12 +6,9 @@ require 'capistrano_recipes/utils'
 # and directories required for deploy.
 Capistrano::Configuration.instance.load do
   namespace :host do
-    # User with root privileges on server. +host:setup+ and all +*:setup_host+ tasks are performed
-    # on behalf of this user.
-    _cset(:root_user) {"root"}
     # Home path for deployer
     # (used in host:create_user task)
-    _cset(:user_home_path) { "/home/www/#{fetch(:deploy_user, user)}" }
+    _cset(:user_home_path) { "/home/#{fetch(:deploy_user, user)}" }
     # Path to public key (or public key itself as string)
     _cset(:ssh_public_key) { "~/.ssh/id_rsa.pub" }
 
@@ -53,7 +50,7 @@ Capistrano::Configuration.instance.load do
     host_task :ssh_copy_id do
       key_path = File.expand_path(ssh_public_key)
       if File.exist?(key_path)
-        key_string = IO.readlines(key_path)[0]
+        key_string = IO.readlines(key_path)[0].strip
       else
         key_string = ssh_public_key
       end

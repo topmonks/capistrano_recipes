@@ -2,13 +2,13 @@
 
 Bunch of capistrano recipes
 
-GitHub: https://github.com/rubydev/capistrano_recipes
+Inspired by https://github.com/elegion/capistrano-scrip
 
 ## Installation
 
 Add `capistrano_recipes` to your application's Gemfile:
 
-    gem 'capistrano_recipes', :git => 'git://github.com/rubydev/capistrano_recipes.git'
+    gem 'capistrano_recipes', :git => 'git://github.com/topmonks/capistrano_recipes.git'
 
 And then install the bundle:
 
@@ -26,12 +26,16 @@ for your application:
     require "capistrano_recipes/nginx"
     require "capistrano_recipes/mysql"
     require "capistrano_recipes/host"
+    require "capistrano_recipes/symlinks"
 
 Then run `cap host:setup deploy:initial` to make your first deploy. Use `cap deploy:migrations` for next deploys.
 
 ### Example of rails app deployment
 
 `config/deploy.rb`:
+    set(:symlink_yml_examples) { ["application", "credit_card_info"]} #If you have any config/*.example.yml files. They must exist on remote server in shared/config directory
+    set(:link_uploads) { true }
+    set(:link_uploads_path) { "uploads" } #or public/uploads. On remote server must exist the same path in shared directory!
 
     default_run_options[:pty] = true     # Must be set for the password prompt to work
     set :use_sudo, false                 # Don't use sudo (deploy user must have very limited permissions in system)
@@ -40,7 +44,7 @@ Then run `cap host:setup deploy:initial` to make your first deploy. Use `cap dep
 
     # Configure capistrano deploy strategy
     set :repository, '.'
-    set :deploy_via, :copy
+    set :deploy_via, :remote_cache
     set :copy_exclude, [".git", "coverage", "results", "tmp", "public/system", "builder"]
 
     set :root_user, "user"               # User with root privileges on server. You will need him only for host:setup
@@ -48,8 +52,8 @@ Then run `cap host:setup deploy:initial` to make your first deploy. Use `cap dep
                                          # deploy:migrations and other common tasks.
     set :user, "app_name"                # Deployer user
     set :group, "app_name"               # Deployer group
-    set :user_home_path, "/home/www"     # Deployer home on target system (used in host:setup when creating new user)
-    set(:deploy_to) { "#{user_home_path}/#{application}" } # Path where to deploy your application
+    set :user_home_path, "/home/deploy"  # Deployer home on target system (used in host:setup when creating new user)
+    set(:deploy_to) { "/var/www/#{application}" } # Path where to deploy your application
 
     role(:web) { domain }                         # Your HTTP server, Apache/etc
     role(:app) { domain }                         # This may be the same as your `Web` server
