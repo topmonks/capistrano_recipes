@@ -33,6 +33,7 @@ Then run `cap host:setup deploy:initial` to make your first deploy. Use `cap dep
 ### Example of rails app deployment
 
 `config/deploy.rb`:
+
     set(:symlink_yml_examples) { ["application", "credit_card_info"]} #If you have any config/*.example.yml files. They must exist on remote server in shared/config directory
     set(:link_uploads) { true }
     set(:link_uploads_path) { "uploads" } #or public/uploads. On remote server must exist the same path in shared directory!
