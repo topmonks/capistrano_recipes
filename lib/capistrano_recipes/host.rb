@@ -32,7 +32,9 @@ Capistrano::Configuration.instance.load do
           fi;
         eos
       end
-      run script
+      sudo_commands do
+        run script
+      end
     end
 
     desc <<-EOF

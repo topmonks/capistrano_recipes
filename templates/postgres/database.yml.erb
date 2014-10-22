@@ -1,13 +1,11 @@
 base: &base
-  adapter: mysql2
+  adapter: postgresql
   encoding: utf8
   collation: utf8_general_ci
   username: <%= database_user %>
   password: <%= database_password %>
   host: localhost
-production:
-  database: <%= application %>
-  <<: *base
-test:
-  database: <%= application %>_test
+  pool: 15
+<%= rails_env %>:
+  database: <%= database_name %>
   <<: *base

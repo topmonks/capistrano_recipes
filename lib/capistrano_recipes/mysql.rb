@@ -9,7 +9,7 @@ Capistrano::Configuration.instance.load do
   # Mysql database name
   _cset(:database_name) { "#{application}" }
   # Path to the rails database erb template to be parsed before uploading to remote server
-  _cset(:database_config_template) { "database.yml.erb" }
+  _cset(:database_config_template) { "mysql/database.yml.erb" }
   # Path to where your remote rails database config will reside
   # (it will be symlinked to +#{current_release}/config/database.yml+ on each deploy)
   _cset(:database_config_path) {"#{shared_path}/config/database.yml" }
