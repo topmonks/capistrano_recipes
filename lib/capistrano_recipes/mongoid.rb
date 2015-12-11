@@ -69,11 +69,11 @@ Capistrano::Configuration.instance.load do
       set(:db_backup_path) { "#{shared_path}/backup/mongodb" }
 
       set(:db_local_file) { "tmp/" }
-      set(:db_user) { db_config[rails_env.to_s]["sessions"]["default"]["username"] }
-      set(:db_pass) { db_config[rails_env.to_s]["sessions"]["default"]["password"] }
-      set(:db_host) { db_config[rails_env.to_s]["sessions"]["default"]["hosts"][0].split(':')[0] }
-      set(:db_port) { db_config[rails_env.to_s]["sessions"]["default"]["hosts"][0].split(':')[1] }
-      set(:db_name) { db_config[rails_env.to_s]["sessions"]["default"]["database"] }
+      set(:db_user) { db_config[rails_env.to_s]["clients"]["default"]["options"]["user"] }
+      set(:db_pass) { db_config[rails_env.to_s]["clients"]["default"]["options"]["password"] }
+      set(:db_host) { db_config[rails_env.to_s]["clients"]["default"]["hosts"][0].split(':')[0] }
+      set(:db_port) { db_config[rails_env.to_s]["clients"]["default"]["hosts"][0].split(':')[1] }
+      set(:db_name) { db_config[rails_env.to_s]["clients"]["default"]["database"] }
 
       set(:db_remote_backup) { "#{db_backup_path}/#{db_name}" }
     end
